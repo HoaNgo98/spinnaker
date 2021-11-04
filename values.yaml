@@ -1,0 +1,117 @@
+### application ###
+
+applicationName: simple-api
+namespace: testing
+
+replicas: 1
+
+image:
+  repository: hub.vngcloud.tech
+  environment: dev
+  tag: 8af4bb6
+  pullPolicy: IfNotPresent
+
+command: java
+options: "$OPTIONS"
+
+environment:
+  enable: true
+  options: "-jar simple-api-0.0.1-SNAPSHOT.jar --server.port=8080 --spring.config.additional-location=./config/application.properties"
+
+ports:
+  enable: true
+  http:
+    enable: true
+    name: http
+    containerPort: 8080
+    protocol: TCP
+  monitor:
+    enable: true
+    name: monitor
+    containerPort: 8081
+    protocol: TCP
+
+livenessProbe:
+  enable: true
+  httpGet:
+    path: /actuator/health
+    port: monitor
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+
+readinessProbe:
+  enable: true
+  httpGet:
+    path: /actuator/health
+    port: monitor
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  successThreshold: 2
+  failureThreshold: 2
+
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep 30s"]
+
+terminationGracePeriodSeconds: 60
+
+resources:
+  limits:
+    memory: 521Mi
+    cpu: 1000m
+  requests:
+    memory: 100Mi
+    cpu: 100m
+
+nodeSelector:
+  env: dev
+  kubernetes.io/hostname: k8s-worker-227
+
+tolerations: {}
+#tolerations:
+#  - effect: NoSchedule
+#    key: system
+#    operator: Equal
+#    value: "true"
+
+
+ingress:
+  enable: true
+  domain: api.vngcloud.tech
+  path: /simple-api2
+
+
+
+
+#################### NOTICE ############################
+############ Please don't edit below ###################
+## Contact system support if you want to edit them #####
+
+### secret ###
+
+vault:
+  environment: dev
+  roleId: 8fd432de-aba2-4105-6ad9-230b2c6fcdbe
+  secretId: 1bdce07d-b860-41ff-7298-32d44f8c5f00
+  vaultAddr: https://vault-dev.vngcloud.tech
+docker: eyJhdXRocyI6eyJodWIudm5nY2xvdWQudGVjaCI6eyJ1c2VybmFtZSI6ImJ1aWxkZXIiLCJwYXNzd29yZCI6IkFoZG8yQUk4U1h1U2FLcUwxZUpySCIsImVtYWlsIjoibGFtdmluaS5oY211c0BnbWFpbC5jb20iLCJhdXRoIjoiWW5WcGJHUmxjanBCYUdSdk1rRkpPRk5ZZFZOaFMzRk1NV1ZLY2tnPSJ9fX0=
+
+### init-container ###
+init:
+  applicationName: config
+  image:
+    repository: hub.vngcloud.tech
+    environment: devops
+    applicationName: create-secret
+    tag: 3
+    imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      memory: 1000Mi
+      cpu: 1000m
+    requests:
+      memory: 100Mi
+      cpu: 100m
